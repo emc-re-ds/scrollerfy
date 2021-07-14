@@ -10,13 +10,14 @@
 ### General Info
 This module shows the information of the song that is currently playing on Spotify and scrolls it if the characters are longer that a certain number configured or if the user does not want any scroll.
 
-[![sample screenshot](https://i.imgur.com/kEluTSq.png)
+[![sample screenshot](https://shor.at/KV7H3cnO)
 
 ### Prerequisites
 - Python (2.x or 3.x)
 - Python `dbus` module
 
 ### Module Example
+```
 [module/spotify]
 type = custom/script
 tail = true
@@ -28,6 +29,7 @@ exec-if = pgrep -x spotify
 exec = ~/bin/init_polySpotify.sh
 format-foreground = #1db954
 interval = 1
+```
 
 ### Custom Arguments
 
