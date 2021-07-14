@@ -10,7 +10,7 @@
 ### General Info
 This module shows the information of the song that is currently playing on Spotify and scrolls it if the characters are longer that a certain number configured or if the user does not want any scroll.
 
-[![sample screenshot](https://shor.at/KV7H3cnO)
+![sample screenshot](https://shor.at/KV7H3cnO)
 
 ### Prerequisites
 - Python (2.x or 3.x)
