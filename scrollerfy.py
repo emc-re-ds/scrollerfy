@@ -220,12 +220,12 @@ try:
             artist = label_with_font.format(font=font, label=artist)
             song = label_with_font.format(font=font, label=song)
             album = label_with_font.format(font=font, label=album)
-    
-    name = output.format(artist=artist, 
-            song=song,
-            album=album)
- 
-    scroller(name, song, play_pause, scroll_text, trunclen + 4) 
+
+        name = output.format(artist=artist,
+                song=song,
+                album=album)
+
+        scroller(name, song, play_pause, scroll_text, trunclen + 4)
 
 except Exception as e:
     if isinstance(e, dbus.exceptions.DBusException):
