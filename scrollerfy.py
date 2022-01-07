@@ -14,7 +14,8 @@
 
 #!/usr/bin/env python
 
-import time 
+import time
+
 import sys
 import dbus
 import argparse
@@ -87,76 +88,103 @@ def truncate(name, trunclen):
             name += ')'
     return name
 
+def play_pause_icon(status, play_pause):
+    if status == 'Playing':
+        play_pause_ = play_pause[0]
+    elif status == 'Paused':
+        play_pause_ = play_pause[1]
+    else:
+        play_pause_ = str()
+
+    if play_pause[2]:
+        play_pause_ = label_with_font.format(font=play_pause[2], label=play_pause)
+
+    return play_pause_
+
 def scroller(name, song, play_pause, scroll_text, trunclen):
     current_state = spotify_properties.Get('org.mpris.MediaPlayer2.Player', 'PlaybackStatus')
 
-    if (scroll_text == False or 
-            len(name) <= trunclen or 
+    if (scroll_text == False or
+            len(name) <= trunclen or
             current_state == 'Paused'):
         while(True):
             metadata = spotify_properties.Get('org.mpris.MediaPlayer2.Player', 'Metadata')
             song_actual = fix_string(metadata['xesam:title']) if metadata['xesam:title'] else ''
-            
+
             # call again the script if the song changes
             if (song != song_actual):
                 return False
-            
+
             # If the song is playing again and scrolling is activated, then change
             if (current_state != spotify_properties.Get('org.mpris.MediaPlayer2.Player', 'PlaybackStatus')):
                 return False
-            
+
             # If the scroll is desactivated
             if (len(name) > trunclen):
                 name = name[:trunclen]
                 name += '...'
                 if ('(' in name) and (')' not in name):
                     name += ')'
-            
-            print(play_pause, name, sep=' ')
-            time.sleep(0.25) 
+
+            play_pause_ic = play_pause_icon(current_state, play_pause)
+            print(play_pause_ic, name, sep=' ')
+            time.sleep(0.25)
     else:
-        marker1 = 0
-        marker2 = 1
-        marker3 = 2
-        while(True):    
-            if (spotify_properties.Get('org.mpris.MediaPlayer2.Player', 'PlaybackStatus') == 'Paused'):
+        marker = 0
+        marker_tc = 0
+        current_state = 'Playing'
+        print_text = ''
+        while(True):
+            metadata = spotify_properties.Get('org.mpris.MediaPlayer2.Player', 'Metadata')
+            song_actual = fix_string(metadata['xesam:title']) if metadata['xesam:title'] else ''
+
+            if (song != song_actual):
                 return False
+
+            play_pause_ic = play_pause_icon(current_state, play_pause)
+            transition_char = " " + marker_tc*"<" + " "
+
+            if (marker >= len(name)):
+                text_tail = name[0:trunclen-len(transition_char)]
+                if (current_state != 'Paused'):
+                    marker_tc = marker_tc-1
+
+                print_text = play_pause_ic + transition_char + text_tail
             else:
-                metadata = spotify_properties.Get('org.mpris.MediaPlayer2.Player', 'Metadata')
-                song_actual = fix_string(metadata['xesam:title']) if metadata['xesam:title'] else ''
-            
-                if (song != song_actual):
-                    return False
-            
-                if (marker1+trunclen <= len(name)):
-                    text_head = name[marker1:trunclen+marker1]
+                if (marker+trunclen < len(name)):
+                    text_head = name[marker:trunclen+marker]
                 else:
-                    text_head = name[marker1:len(name)]
-               
-                if (marker1 >= len(name)):
-                    transition_char = " " + marker3*"<" + " "
-                    text_tail = name[0:marker2]
-                    marker3 = marker3-1
+                    text_head = name[marker:len(name)]
 
-                    print(play_pause, transition_char, text_tail, sep='')
-                elif (abs(marker1-len(name)) < trunclen):
-                    text_tail = name[0:marker2]
-                    marker2 = marker2+1
+                if (abs(marker-len(name)) < trunclen):
+                    if (current_state != 'Paused'):
+                        tail_chars_num = trunclen-abs(marker-len(name))-len(transition_char)
 
-                    print(play_pause, text_head, "<<" ,text_tail, sep=' ')
+                    if (tail_chars_num <= 0):
+                        text_tail = ''
+                    else:
+                        text_tail = name[0:tail_chars_num]
+
+                    print_text = play_pause_ic + text_head + transition_char + text_tail
+
+                    if (marker_tc < 2 and current_state != 'Paused'):
+                        marker_tc = marker_tc+1
                 else:
                     text_tail = ''
-                    
-                    print(play_pause, text_head, sep=' ')
 
-                marker1 = marker1+1
+                    print_text = play_pause_ic + text_head + transition_char
 
-                if (marker1 == len(name)+2):
-                    marker1 = 0
-                    marker2 = 1
-                    marker3 = 2
+            if (current_state != 'Paused'):
+                marker = marker+1
 
-                time.sleep(0.25) 
+            print(print_text)
+
+            if (marker == len(name)+3):
+                marker = 0
+                marker_tc = 0
+
+            current_state = spotify_properties.Get('org.mpris.MediaPlayer2.Player', 'PlaybackStatus')
+            time.sleep(0.25)
 
 # Default parameters
 output = fix_string(u'{play_pause} {artist}: {song}')
@@ -193,19 +221,10 @@ try:
     metadata = spotify_properties.Get('org.mpris.MediaPlayer2.Player', 'Metadata')
     status = spotify_properties.Get('org.mpris.MediaPlayer2.Player', 'PlaybackStatus')
 
-    # Handle play/pause label
+    # Handle play/pause
 
     play_pause = play_pause.split(',')
-
-    if status == 'Playing':
-        play_pause = play_pause[0]
-    elif status == 'Paused':
-        play_pause = play_pause[1]
-    else:
-        play_pause = str()
-
-    if play_pause_font:
-        play_pause = label_with_font.format(font=play_pause_font, label=play_pause)
+    play_pause.append(play_pause_font)
 
     # Handle main label
 
@@ -232,3 +251,4 @@ except Exception as e:
         print('')
     else:
         print(e)
+
